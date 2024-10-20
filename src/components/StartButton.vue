@@ -1,3 +1,8 @@
+<!-- 
+This component displays a button that will generate new numbers when clicked.
+The button is disabled if the user has already guessed the numbers.
+The function createNumbers is injected from the parent component and is used to generate the new numbers.
+-->
 <template>
    <button @click="generateNumbers">Generar Números</button>
  </template>
@@ -8,7 +13,7 @@
  const createNumbers = inject('createNumbers');
  
  const generateNumbers = () => {
-   createNumbers(); // Llamamos a la función para generar nuevos números
+   createNumbers(); // Call the function to generate new numbers
  };
  
  </script>
