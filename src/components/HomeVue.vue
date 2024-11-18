@@ -8,10 +8,15 @@ The <StartButton> component is used to generate the numbers and start the game.
 
 <template>
   <div class="todo">
-    <h1>Adivina el code</h1>
-    <CpNumber></CpNumber>
-    <BoxNumbers></BoxNumbers>
-    <StartButton></StartButton>
+    <div class="title" >
+      <h1>Guess The Code</h1>
+      <i class="bi bi-circle-fill" :style="{color: iconStateDefault}"	></i>
+    
+    </div>
+   
+    <CpNumber ></CpNumber>
+    <BoxNumbers @iconState="updateIconState" @onStartGame="updateStartGame" @updateButtonState="updateClickState" :clickState="clickState" :startGame="startGame " :iconState="iconStateDefault"></BoxNumbers>
+    <StartButton @onClickState="updateClickState" @onStartGame="updateStartGame"></StartButton>
   </div>
 </template>
 
@@ -21,9 +26,31 @@ import StartButton from "./StartButton.vue";
 import BoxNumbers from "./BoxNumbers.vue";
 import { provide, ref } from 'vue';
 
+
 const defaultNumbers = ref(["x", "x", "x", "x"]);
 const counter=ref(0)
 const iscorrectNumber=ref(false);
+const clickState=ref(null);
+const startGame = ref(null);
+const iconStateDefault = ref("#007BFF");
+const ableToChangeNumber=ref(null);
+const updateIconState=(newIconState)=>{
+  iconStateDefault.value=newIconState;
+}
+
+const updateClickState=(newValue)=>{
+
+  console.log("recieving event",!newValue);
+
+ 
+  clickState.value=newValue;
+
+}
+const updateStartGame=(newStartGame)=>{
+  console.log("reciving game",newStartGame);
+  startGame.value=newStartGame;
+}
+
 
  /*
 Function: createNumbers()
@@ -42,13 +69,19 @@ const createNumbers = () => {
     defaultNumbers.value.splice(0, defaultNumbers.value.length, ...cpNewsNumbers);
     counter.value=1;
     iscorrectNumber.value=false
+    ableToChangeNumber.value=false;
+    
+
   }
- 
+
+
 };
 
+provide('ableToChangeNumber',ableToChangeNumber);
 provide('defaultNumbers', defaultNumbers);
 provide('createNumbers', createNumbers);
 provide('iscorrectNumber' ,iscorrectNumber)
+provide('counter',counter)
 </script>
 
 <style scoped>
@@ -58,5 +91,35 @@ provide('iscorrectNumber' ,iscorrectNumber)
   justify-content: center;
   flex-direction: column;
   gap: 20px;
+  background-color: rgb(255, 255, 255);
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0px 0px 10px 0px rgba(0, 0, 0, 0.5);
+  width: 500px;
+  height: 500px;
+}
+.icon{
+
+  width: 100px;
+  height: 100px;  
+}
+.title{
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 20px;
+}
+h1{
+  font-size: 30px;
+}
+
+@media screen and (max-width: 600px) {
+
+  .todo {
+    width: 300px;
+    height: 500px;
+  }
+  
 }
 </style>

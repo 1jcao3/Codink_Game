@@ -18,13 +18,15 @@ It displays each number in a separate div.
   const iscorrectNumber = inject('iscorrectNumber');
   const defaultNumbers = inject('defaultNumbers');
   const defaultSymbols = ref(['x', 'x', 'x', 'x']);
-  
+  const ableToChangeNumber = inject('ableToChangeNumber');
   // Computed property to determine which numbers to display
   const displayNumbers = computed(() => {
-    if (iscorrectNumber.value) {
+    if (ableToChangeNumber.value) {
+      return defaultSymbols.value.slice();
+    } else if (iscorrectNumber.value) {
       return defaultNumbers.value.slice();
     } else {
-      return defaultNumbers.value.slice();
+      return defaultSymbols.value.slice();
     }
     
   });
@@ -42,6 +44,9 @@ It displays each number in a separate div.
     flex-direction: row;
     align-items: center;
     justify-content: center;
+    gap: 10px;
+    font-size: 30px;
+    color: #007BFF;
   }
   
   div {

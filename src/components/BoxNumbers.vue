@@ -7,52 +7,125 @@ If not, it will show a message saying that the numbers don't match.
 -->
 <template>
   <div class="input">
-    <input 
-      v-for="(value, index) in numbers" 
-      :key="index" 
-      type="number" 
-      step="1" 
-      v-model="numbers[index]"
-      @input="handleInput(index, $event)" 
-      @keydown="handleKeydown(index, $event)" 
-      ref="input">
+    <input v-for="(value, index) in numbers" :key="index" type="number" step="1" v-model="numbers[index]"
+      v-limit-input="{ index, length: numbers.length, refs: input, compare, numbers, emitIconState }"
+      v-handle-key="{ index, refs: input }" ref="input">
+
   </div>
 
-  <div class="box" v-if="newNumbers.length">
+  <div class="box" v-show="newNumbers.length" ref="scrollContainer">
     <ul v-for="(numbers1, idx) in newNumbers" :key="idx">
       <li>
         {{ numbers1[0] }} {{ numbers1[1] }} {{ numbers1[2] }} {{ numbers1[3] }} -----
         <span>{{ countTotalMatch(numbers1) }}</span>
+
+
       </li>
     </ul>
   </div>
 
-  <div class="answer">
+  <div class="answer" ref="textDiv">
     {{ text }}
   </div>
 </template>
 
 <script setup>
-import { inject, ref } from 'vue';
+
+
+import { inject, ref, getCurrentInstance, watch, nextTick, defineProps, toRef } from 'vue';
 
 const numbers = ref([null, null, null, null]);
 const input = ref([]);
 const defaultNumbers = inject('defaultNumbers');
 const newNumbers = ref([]);
-const text = ref("comienza");
+const text = ref("play the button to start");
+const textDiv = ref(null);
 let clean = ref(false);
 let iscorrectNumber = inject('iscorrectNumber');
+let iconState = ref("#007BFF");
+
+// The getCurrentInstance() function returns the current active instance, which is
+// the component instance that is currently being rendered. The proxy property of
+// the instance is a proxy object that allows us to access the properties and
+// methods of the component without having to use this.$root or this.$parent.
+const { proxy } = getCurrentInstance();
+const scrollContainer = ref(null);
+
+const props = defineProps({
+  clickState: {
+    type: Boolean,
+    default: false
+
+  },
+  startGame: {
+    type: Boolean,
+    default: false
+  },
+  iconState: {
+    type: String,
+    default: "#007BFF"
+  }
+});
+const clickState = toRef(props, "clickState");
+const startGame = toRef(props, "startGame");
+
+
+watch([clickState, startGame], ([click, startGame]) => {
+  console.log("watching click state", click);
+  console.log("watching startGame", startGame);
+
+        if(click &&!startGame){
+          iconState.value = "#007BFF";
+          proxy.$emit('iconState', iconState.value);
+        }
+  if (click && startGame) {
+    
+    text.value = "Can't start a game until you guess the numbers";
+    if (textDiv.value) textDiv.value.style.color = "red";
+    setTimeout(() => {
+      emitUpdateButtonState(false);
+      emitStartGame(true);
+    }, 2000);
+  } else if (startGame) {
+    text.value = "Continue";
+    if (textDiv.value) textDiv.value.style.color = "black";
+    setTimeout(() => {
+      emitUpdateButtonState(false);
+      emitStartGame(true);
+    }, 2000);
+  }
+}, { immediate: true });
+
+
+
+
+
+
+
+
+
+const emitUpdateButtonState = (state) => {
+  proxy.$emit("updateButtonState", state);
+};
+
+const emitStartGame = (state) => {
+  proxy.$emit("onStartGame", state);
+};
+
+
+
 
 /**
  * This function takes an array of numbers and compares it with the cpNumber (the
  * correct numbers to guess). It counts how many numbers match and returns that
  * count. It also updates the cpNumberCount object with the numbers that have been
  * guessed correctly.
- * 
 **/
+
+
 const countTotalMatch = (numbersArray) => {
   let totalMatch = 0;
-  
+
   let cpNumberArray = defaultNumbers.value.map(Number);
   let cpNumberCount = {};
 
@@ -89,7 +162,7 @@ const countTotalMatch = (numbersArray) => {
 const compare = (numbers) => {
   let matchCount = 0;
   let totalMatch = 0;
-  
+
   let cpNumberArray = defaultNumbers.value.map(Number);
   let cpNumberCount = {};
 
@@ -114,11 +187,13 @@ const compare = (numbers) => {
 
   if (totalMatch > 0) {
     newNumbers.value.push(numbers.slice());
-    text.value = `coinciden ${totalMatch} número${totalMatch > 1 ? 's' : ''}`;
+    text.value = `match ${totalMatch} numbers${totalMatch > 1 ? 's' : ''}`;
+
   } else {
     newNumbers.value.push(numbers.slice());
     iscorrectNumber.value = false;
-    text.value = "no coinciden números";
+    text.value = "no match";
+
   }
 
   if (matchCount === 4) {
@@ -126,88 +201,45 @@ const compare = (numbers) => {
     clean.value = true;
     if (clean.value) {
       newNumbers.value = [];
-      text.value = "lo lograste";
+      text.value = "you did it!";
+      setTimeout(() => {
+        text.value = "play the button to start";
+       
+       
+      }, 3000)
+
     }
   }
 };
-const handleInput = (index, event) => {
-  const inputElement = event.target;
 
-  if (event.inputType === "insertText" && event.data) {
-    if (event.data.length > 1 || event.data === "e") {
-      inputElement.value = "";
-      event.preventDefault();
-      return;
-    }
+
+const emitIconState = (numbers1) => {
+  if (countTotalMatch(numbers1) > 0 && countTotalMatch(numbers1) < 4) {
+    iconState.value = "yellow";
+  } else if (countTotalMatch(numbers1) === 4) {
+    iconState.value = "green";
+
   }
-
-  // Limit input to one character
-  if (inputElement.value.length > 1) {
-    inputElement.value = inputElement.value.slice(0, 1);
+  else if (countTotalMatch(numbers1) === 0) {
+    iconState.value = "red";
   }
+ 
+  proxy.$emit('iconState', iconState.value);
 
-  // Update the value in numbers
-  numbers.value[index] = inputElement.value;
 
-  // Move focus to next input if the value has one character
-  if (inputElement.value.length === 1 && index < numbers.value.length - 1) {
-    input.value[index + 1].focus();
-  }
 
-  // If the last input is filled, compare and reset
-  if (index === 3 && inputElement.value.length === 1) {
-    compare(numbers.value);
-    numbers.value = [null, null, null, null];
-    input.value.forEach((inputElement, idx) => {
-      inputElement.value = '';
-      if (idx === 0) {
-        inputElement.focus();
-      }
-    });
-  }
 };
+watch(newNumbers, () => {
+  nextTick(() => {
 
-const handleKeydown = (index, event) => {
-  // Check if the event is defined
-  if (!event) {
-    console.error('Event is undefined');
-    return;
-  }
 
-  const focusedInput = document.activeElement;
+    if (scrollContainer.value) {
+      scrollContainer.value.scrollTop = scrollContainer.value.scrollHeight;
 
-  if (event.key === "Backspace" || event.keyCode === 8) {
-    if (focusedInput.value.length === 0 && index > 0) {
-      // Move focus to the previous input if the current one is empty
-      input.value[index - 1].focus();
-      event.preventDefault();
-    } else {
-      // Delete the character if there is something in the field
-      focusedInput.value = focusedInput.value.slice(0, -1);
-      event.preventDefault(); // Prevent default behavior
+
     }
-  }
-
-  if (event.key === "ArrowLeft" || event.keyCode === 37) {
-    if (index > 0) {
-      // Move focus to the previous input
-      input.value[index - 1].focus();
-      event.preventDefault();
-    }
-  }
-
-  if (event.key === "ArrowRight" || event.keyCode === 39) {
-    if (index < input.value.length - 1) {
-      // Move focus to the next input
-      input.value[index + 1].focus();
-      event.preventDefault();
-    }
-  }
-
-  if (event.key === "ArrowUp" || event.key === "ArrowDown" || event.keyCode === 38 || event.keyCode === 40) {
-    event.preventDefault(); // Prevent cursor movement
-  }
-};
+  });
+}, { deep: true });
 </script>
 
 
@@ -223,7 +255,18 @@ const handleKeydown = (index, event) => {
 
 input {
 
-  width: 25px;
+  width: 28px;
+  height: 28px;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+  text-align: center;
+  font-size: 16px;
+  margin-right: 5px;
+  outline: none;
+  padding: 0;
+  box-sizing: border-box;
+  background-color: transparent;
+
 }
 
 /* Remove arrows in webkit browsers (Chrome, Safari, Edge) */
@@ -233,10 +276,11 @@ input[type=number]::-webkit-inner-spin-button {
   margin: 0;
 }
 
-ul {
+.box {
 
   text-decoration: none;
-  
+  max-height: 120px;
+  overflow-y: auto;
 
 }
 </style>
