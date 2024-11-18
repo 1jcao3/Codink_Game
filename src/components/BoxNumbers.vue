@@ -78,6 +78,11 @@ watch([clickState, startGame], ([click, startGame]) => {
           iconState.value = "#007BFF";
           proxy.$emit('iconState', iconState.value);
         }
+
+        if(click && !startGame){
+          text.value = "start the game";
+    if (textDiv.value) textDiv.value.style.color = "black";
+        }
   if (click && startGame) {
     
     text.value = "Can't start a game until you guess the numbers";
