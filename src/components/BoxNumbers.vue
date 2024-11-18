@@ -7,7 +7,9 @@ If not, it will show a message saying that the numbers don't match.
 -->
 <template>
   <div class="input">
-    <input v-for="(value, index) in numbers" :key="index" type="number" step="1" v-model="numbers[index]"
+
+    
+    <input v-show="show" v-for="(value, index) in numbers" :key="index" type="number" step="1" v-model="numbers[index]"
       v-limit-input="{ index, length: numbers.length, refs: input, compare, numbers, emitIconState }"
       v-handle-key="{ index, refs: input }" ref="input">
 
@@ -43,6 +45,7 @@ const textDiv = ref(null);
 let clean = ref(false);
 let iscorrectNumber = inject('iscorrectNumber');
 let iconState = ref("#007BFF");
+let show=ref(false);
 
 // The getCurrentInstance() function returns the current active instance, which is
 // the component instance that is currently being rendered. The proxy property of
@@ -81,6 +84,7 @@ watch([clickState, startGame], ([click, startGame]) => {
 
         if(click && !startGame){
           text.value = "start the game";
+          show.value=true;
     if (textDiv.value) textDiv.value.style.color = "black";
         }
   if (click && startGame) {
@@ -165,6 +169,7 @@ const countTotalMatch = (numbersArray) => {
  **/
 
 const compare = (numbers) => {
+
   let matchCount = 0;
   let totalMatch = 0;
 
